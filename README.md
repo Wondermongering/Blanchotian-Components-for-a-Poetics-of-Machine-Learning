@@ -12,8 +12,6 @@ Together, these components form a **literary-philosophical machine learning para
 
 ---
 
-## **README.md**
-
 ```markdown
 # Blanchotian Neural Network Components
 
