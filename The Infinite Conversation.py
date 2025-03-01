@@ -2,72 +2,73 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# Assume BlanchotianAttention and FeedForward are defined elsewhere
-# (as in previous responses)
-
 class BlanchotianTransformer(nn.Module):
-    def __init__(self, dim, depth, heads, mlp_dim, discontinuity_factor=0.5, decay_rate=0.01):
+    def __init__(self, dim, depth, heads, mlp_dim, max_memory=5,
+                 discontinuity_factor=0.6, noise_factor=0.02,
+                 init_temp=1.0, tau=0.5, use_gumbel=True, decay_rate=0.01):
         super().__init__()
         self.depth = depth
-        self.discontinuity_factor = discontinuity_factor
+        self.max_memory = max_memory  # Limited memory
+        self.discontinuity_factor = discontinuity_factor  # Control discontinuity
+        self.noise_factor = noise_factor  # Control writing noise
+        self.use_gumbel = use_gumbel # Toggle for Gumbel-Softmax
         self.decay_rate = decay_rate
 
         self.layers = nn.ModuleList([])
         for _ in range(depth):
             self.layers.append(nn.ModuleList([
-                BlanchotianAttention(dim, heads=heads),  # Assuming this exists
-                FeedForward(dim, mlp_dim)  # Assuming this exists
+                BlanchotianAttention(dim, heads=heads),
+                FeedForward(dim, mlp_dim),
+                nn.Parameter(torch.ones(1))  # Per-layer weight (for Gumbel)
             ]))
 
-        # Layer-specific weights: (depth, depth + 1)
-        # Each row corresponds to a layer, and the columns are weights for
-        # all previous layers (including input)
-        self.layer_weights = nn.Parameter(torch.ones(depth, depth + 1))
+        # Layer-specific weights, but initialized with a temperature schedule
+        self.layer_weights = nn.Parameter(torch.linspace(init_temp, 0, depth + 1))
+        self.tau = tau
+
+        # For decaying regularization
+        self.register_buffer('decay_factors', torch.pow(self.decay_rate, torch.arange(depth + 1, 0, -1).float()))
 
     def forward(self, x):
-        layer_outputs = [x]  # Initialize with the input
+        memory_buffer = [x]
 
-        for i, (attn, ff) in enumerate(self.layers):
-            # "The Infinite Conversation" - each layer speaks to all previous layers
-            # Use layer-specific weights
-            weights = F.softmax(self.layer_weights[i, :len(layer_outputs)], dim=0)
-            weighted_sum = sum(w * output for w, output in zip(weights, layer_outputs))
+        for i, (attn, ff, layer_weight) in enumerate(self.layers):
+            # Fragmentary Memory Management
+            if len(memory_buffer) > self.max_memory:
+                memory_buffer = memory_buffer[-self.max_memory:]
 
-            # "The Writing of Disaster" - information passes through discontinuity
-            # Apply discontinuity factor to the attention output
-            attn_out = attn(weighted_sum)
-            x = self.discontinuity_factor * attn_out + weighted_sum  # Residual connection
-            x = ff(x) + x  # Residual connection
-            layer_outputs.append(x)
+            # Weighted conversation with history
+            if self.use_gumbel:
+                weights = F.gumbel_softmax(self.layer_weights[:len(memory_buffer)] * layer_weight, tau=self.tau, hard=False)
+            else:
+                weights = F.softmax(self.layer_weights[:len(memory_buffer)], dim=0)
 
-        # Return weighted sum of all layer outputs
-        # Use the weights from the *last* layer for the final combination
-        final_weights = F.softmax(self.layer_weights[-1, :], dim=0)
-        return sum(w * output for w, output in zip(final_weights, layer_outputs))
+            conversation = sum(w * mem for w, mem in zip(weights, memory_buffer))
+
+            # Discontinuous transformation
+            attn_out = attn(conversation)
+            x = self.discontinuity_factor * attn_out + conversation
+            x = ff(x) + x
+
+            # Noisy memory update
+            memory_buffer.append(x + torch.randn_like(x) * self.noise_factor)
+
+        # Final fragmentary composition (using last layer's individual weight if gumbel)
+        if self.use_gumbel:
+           final_weights = F.gumbel_softmax(self.layer_weights * self.layers[-1][2], tau=self.tau, hard = False)
+        else:
+           final_weights =  F.softmax(self.layer_weights, dim=0)
+        return sum(w * mem for w, mem in zip(final_weights, memory_buffer))
+
 
     def regularization_loss(self):
-        """
-        Calculates a regularization loss that encourages layer weights to decay.
-        This favors later layers while still allowing earlier layers to contribute.
-        """
-        # L2 regularization with a decay factor that increases with layer depth
-        decay_factors = torch.arange(1, self.depth + 2, device=self.layer_weights.device).float()
-        decay_factors = torch.pow(self.decay_rate, self.depth + 1 - decay_factors) #Exponential decay
-        return torch.sum(decay_factors * (self.layer_weights ** 2))
+      """
+        Calculates a regularization loss that encourages layer weights
+        to decay (favoring later layers).
+      """
+      return torch.sum(self.decay_factors * (self.layer_weights ** 2))
 
-# Example FeedForward (replace with your actual implementation)
-class FeedForward(nn.Module):
-    def __init__(self, dim, hidden_dim):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(dim, hidden_dim),
-            nn.GELU(),
-            nn.Linear(hidden_dim, dim)
-        )
-
-    def forward(self, x):
-        return self.net(x)
-#Dummy Blanchotian Attention
+#Dummy Blanchotian Attention and FeedForward
 class BlanchotianAttention(nn.Module):
     def __init__(self, dim, heads=8):
         super().__init__()
@@ -87,6 +88,18 @@ class BlanchotianAttention(nn.Module):
 
         return self.to_out(out)
 
+class FeedForward(nn.Module):
+    def __init__(self, dim, hidden_dim):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(dim, hidden_dim),
+            nn.GELU(),
+            nn.Linear(hidden_dim, dim)
+        )
+
+    def forward(self, x):
+        return self.net(x)
+
 # Example Usage and Training Loop (with regularization)
 # Assuming you have your data loaders and OrphicEmbeddings ready
 
@@ -98,16 +111,16 @@ embedding_dim = 128
 num_epochs = 2
 
 # Instantiate the model
-dim = embedding_dim  # Dimensionality of the embeddings
-depth = 6            # Number of layers
-heads = 8            # Number of attention heads
-mlp_dim = 256        # Feed-forward network hidden dimension
+dim = embedding_dim
+depth = 6
+heads = 8
+mlp_dim = 256
 model = BlanchotianTransformer(dim, depth, heads, mlp_dim)
 
-# Dummy input data (replace with your actual data loading)
+# Dummy input data
 x = torch.randint(0, vocab_size, (batch_size, sequence_length))
 
-# Optimizer (AdamW is often better than Adam)
+# Optimizer
 optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-5)
 
 # Training loop
@@ -115,8 +128,7 @@ for epoch in range(num_epochs):
     optimizer.zero_grad()
     output = model(x)
 
-    # Example loss function (replace with your actual loss)
-    # Here, we're just summing the output for demonstration purposes
+    # Example loss function (replace)
     loss = output.sum()
 
     # Add regularization loss
