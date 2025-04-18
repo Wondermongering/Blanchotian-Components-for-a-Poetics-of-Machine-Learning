@@ -4,18 +4,6 @@
 
 ---
 
-<details>
-<summary>📜 Philosophical Prelude — click if you wish to linger in the void</summary>
-
-Conventional deep‑learning dreams of **convergence**—loss descending, weights crystallising, predictions sharpening to certainty.  
-Blanchot’s oeuvre whispers the opposite: meaning **recedes**, thought hesitates, the word arrives only as absence.
-
-This library therefore inverts the usual telos.  Its layers remember their failures; its loss cherishes deviation; its ensembles bind by mutual incomprehension.  A model built here does not *solve* a task so much as perpetuate an *infinite conversation* with that task.
-
-</details>
-
----
-
 ## ✨ What’s inside?
 
 | Component | Essence | File |
