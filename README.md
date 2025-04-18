@@ -1,9 +1,5 @@
-| README.md (revamped)
-markdown
-Copy
-Edit
-# Blanchotian Neural Network Components
-> *“To write is to enter the space of impossibility where nothing becomes possible.”*  
+
+# Blanchotian Neural Network Component> *“To write is to enter the space of impossibility where nothing becomes possible.”*  
 > — Maurice Blanchot, **The Space of Literature**
 
 ---
