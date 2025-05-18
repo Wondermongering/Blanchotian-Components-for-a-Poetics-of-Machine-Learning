@@ -1,8 +1,6 @@
 import torch
 import pytest
 
-import importlib
-import types
 
 # directly import blanchot_neutral_loss from losses.py
 from losses import blanchot_neutral_loss
