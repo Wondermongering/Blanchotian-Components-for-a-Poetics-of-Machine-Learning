@@ -16,6 +16,7 @@
 | **Blanchotian Layer Norm** | Normalises the centre while letting solitary features remain singular. | `Blanchotian Layer Normalization.py` |
 | **Blanchotian Transformer** | Layers commune with **all** preceding layers—an endless palimpsest. | `The Infinite Conversation.py` |
 | **Unavowable Community** | Ensemble whose disagreement is the signal; models converse through divergence. | `Unavowable Community.py` |
+| **Blanchotian Style Transfer** | Apply Blanchotian components to reimagine text in a chosen style. | `Blanchotian_Style_Transfer.py` |
 | **Différance Layer** | Meaning arrives only in the wake of what came before; outputs are forever displaced by traces of prior states. | `Differance Layer.py` |
 
 ---
