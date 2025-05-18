@@ -100,44 +100,47 @@ class FeedForward(nn.Module):
     def forward(self, x):
         return self.net(x)
 
-# Example Usage and Training Loop (with regularization)
-# Assuming you have your data loaders and OrphicEmbeddings ready
+if __name__ == "__main__":
+    # Example Usage and Training Loop (with regularization)
+    # Assuming you have your data loaders and OrphicEmbeddings ready
 
-# Example Data
-batch_size = 4
-sequence_length = 10
-vocab_size = 1000 # Example
-embedding_dim = 128
-num_epochs = 2
+    # Example Data
+    batch_size = 4
+    sequence_length = 10
+    vocab_size = 1000  # Example
+    embedding_dim = 128
+    num_epochs = 2
 
-# Instantiate the model
-dim = embedding_dim
-depth = 6
-heads = 8
-mlp_dim = 256
-model = BlanchotianTransformer(dim, depth, heads, mlp_dim)
+    # Instantiate the model
+    dim = embedding_dim
+    depth = 6
+    heads = 8
+    mlp_dim = 256
+    model = BlanchotianTransformer(dim, depth, heads, mlp_dim)
 
-# Dummy input data
-x = torch.randint(0, vocab_size, (batch_size, sequence_length))
+    # Dummy input data
+    x = torch.randint(0, vocab_size, (batch_size, sequence_length))
 
-# Optimizer
-optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-5)
+    # Optimizer
+    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-5)
 
-# Training loop
-for epoch in range(num_epochs):
-    optimizer.zero_grad()
-    output = model(x)
+    # Training loop
+    for epoch in range(num_epochs):
+        optimizer.zero_grad()
+        output = model(x)
 
-    # Example loss function (replace)
-    loss = output.sum()
+        # Example loss function (replace)
+        loss = output.sum()
 
-    # Add regularization loss
-    reg_loss = model.regularization_loss()
-    total_loss = loss + reg_loss
+        # Add regularization loss
+        reg_loss = model.regularization_loss()
+        total_loss = loss + reg_loss
 
-    total_loss.backward()
-    optimizer.step()
+        total_loss.backward()
+        optimizer.step()
 
-    print(f"Epoch {epoch+1}, Loss: {loss.item()}, Regularization Loss: {reg_loss.item()}")
+        print(
+            f"Epoch {epoch+1}, Loss: {loss.item()}, Regularization Loss: {reg_loss.item()}"
+        )
 
-print("Training complete.")
+    print("Training complete.")
