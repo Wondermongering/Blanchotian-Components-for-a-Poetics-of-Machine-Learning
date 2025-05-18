@@ -98,42 +98,46 @@ class UnavowableCommunity(nn.Module):
         return -torch.mean(disagreement_energy) #Minimize energy, maximize disagreement
 
 
-# Example Usage (assuming you have defined 'models', 'dim', and a suitable loss function)
-# Create some dummy models
-class DummyModel(nn.Module):
-    def __init__(self, dim):
-        super().__init__()
-        self.linear = nn.Linear(dim, dim)
-    def forward(self, x):
-      return self.linear(x)
+if __name__ == "__main__":
+    # Example Usage (assuming you have defined 'models', 'dim', and a suitable loss function)
+    # Create some dummy models
+    class DummyModel(nn.Module):
+        def __init__(self, dim):
+            super().__init__()
+            self.linear = nn.Linear(dim, dim)
 
-dim = 64
-models = [DummyModel(dim) for _ in range(3)]
-community = UnavowableCommunity(models, dim)
+        def forward(self, x):
+            return self.linear(x)
 
-# Dummy input
-x = torch.randn(32, dim)  # Batch size 32
+    dim = 64
+    models = [DummyModel(dim) for _ in range(3)]
+    community = UnavowableCommunity(models, dim)
 
-# Forward pass
-output = community(x)
+    # Dummy input
+    x = torch.randn(32, dim)  # Batch size 32
 
-# Example training loop (with diversity regularization)
-optimizer = torch.optim.AdamW(community.parameters(), lr=1e-4)
-num_epochs = 10
-reg_strength = 0.01
-
-for epoch in range(num_epochs):
-    optimizer.zero_grad()
-    model_outputs = [model(x) for model in community.models] #Need to compute here for regularization
+    # Forward pass
     output = community(x)
 
-    # Replace this with your actual task loss
-    task_loss = torch.mean(output**2)  # Dummy task loss
+    # Example training loop (with diversity regularization)
+    optimizer = torch.optim.AdamW(community.parameters(), lr=1e-4)
+    num_epochs = 10
+    reg_strength = 0.01
 
-    # Diversity regularization
-    diversity_loss = community.diversity_regularization(model_outputs)
+    for epoch in range(num_epochs):
+        optimizer.zero_grad()
+        model_outputs = [model(x) for model in community.models]  # Need for regularization
+        output = community(x)
 
-    total_loss = task_loss + reg_strength * diversity_loss
-    total_loss.backward()
-    optimizer.step()
-    print(f"Epoch: {epoch}, Task Loss: {task_loss.item()}, Diversity Loss {diversity_loss.item()}")
+        # Replace this with your actual task loss
+        task_loss = torch.mean(output**2)  # Dummy task loss
+
+        # Diversity regularization
+        diversity_loss = community.diversity_regularization(model_outputs)
+
+        total_loss = task_loss + reg_strength * diversity_loss
+        total_loss.backward()
+        optimizer.step()
+        print(
+            f"Epoch: {epoch}, Task Loss: {task_loss.item()}, Diversity Loss {diversity_loss.item()}"
+        )

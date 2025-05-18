@@ -121,23 +121,35 @@ def train_orphic_embeddings(model, data_loader, epochs, optimizer, num_negative_
 
         print(f"Epoch {epoch+1}, Loss: {total_loss}")
 
-# Example Usage
-vocab_size = 10000 # Example
-embedding_dim = 128
-context_window = 5
-model = OrphicEmbedding(vocab_size, embedding_dim, context_window)
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-# Create a dummy data loader (replace with your actual data)
-class DummyDataset(torch.utils.data.Dataset):
-    def __init__(self, num_sequences, seq_len):
-      self.num_sequences = num_sequences
-      self.seq_len = seq_len
-    def __len__(self):
-        return self.num_sequences
-    def __getitem__(self,idx):
-      return torch.randint(0, vocab_size, (self.seq_len,)) #Random sequence
-dataset = DummyDataset(100, 20) # 100 sequences of length 20
-data_loader = torch.utils.data.DataLoader(dataset, batch_size=32)
-#Train
-train_orphic_embeddings(model, data_loader, epochs=10, optimizer=optimizer, num_negative_samples=5)
-print("Finished Training Orphic Embeddings")
+if __name__ == "__main__":
+    # Example Usage
+    vocab_size = 10000  # Example
+    embedding_dim = 128
+    context_window = 5
+    model = OrphicEmbedding(vocab_size, embedding_dim, context_window)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+
+    # Create a dummy data loader (replace with your actual data)
+    class DummyDataset(torch.utils.data.Dataset):
+        def __init__(self, num_sequences, seq_len):
+            self.num_sequences = num_sequences
+            self.seq_len = seq_len
+
+        def __len__(self):
+            return self.num_sequences
+
+        def __getitem__(self, idx):
+            return torch.randint(0, vocab_size, (self.seq_len,))  # Random sequence
+
+    dataset = DummyDataset(100, 20)  # 100 sequences of length 20
+    data_loader = torch.utils.data.DataLoader(dataset, batch_size=32)
+
+    # Train
+    train_orphic_embeddings(
+        model,
+        data_loader,
+        epochs=10,
+        optimizer=optimizer,
+        num_negative_samples=5,
+    )
+    print("Finished Training Orphic Embeddings")
