@@ -23,7 +23,7 @@ class BlanchotianAttention(nn.Module):
         # Temperature adjustment parameter
         self.temperature_factor = nn.Parameter(torch.ones(heads, 1, 1))
 
-    def forward(self, x):
+    def forward(self, x, *, return_attention: bool = False):
         b, n, _ = x.shape
         
         # Project input to queries, keys, values
@@ -66,4 +66,8 @@ class BlanchotianAttention(nn.Module):
         
         # Rearrange and project
         out = rearrange(out, 'b h n d -> b n (h d)')
-        return self.to_out(out)
+        out = self.to_out(out)
+
+        if return_attention:
+            return out, attn
+        return out
