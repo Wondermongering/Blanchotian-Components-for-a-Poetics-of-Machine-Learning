@@ -14,6 +14,7 @@
 | **Neutral Loss** | Re‑centres error as a creative differential; stable log‑sum‑exp, label smoothing, disaster threshold. | `losses.py` |
 | **Blanchotian Transformer** | Layers commune with **all** preceding layers—an endless palimpsest. | `The Infinite Conversation.py` |
 | **Unavowable Community** | Ensemble whose disagreement is the signal; models converse through divergence. | `Unavowable Community.py` |
+| **Blanchotian Style Transfer** | Apply Blanchotian components to reimagine text in a chosen style. | `Blanchotian_Style_Transfer.py` |
 
 ---
 
