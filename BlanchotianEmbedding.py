@@ -1,3 +1,7 @@
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
 class BlanchotianEmbedding(nn.Module):
     def __init__(self, num_tokens, dim, orpheus_factor=0.1):
         super().__init__()
