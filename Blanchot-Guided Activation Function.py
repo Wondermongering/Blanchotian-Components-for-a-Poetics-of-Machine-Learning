@@ -1,3 +1,5 @@
+import torch
+
 def blanchot_activation(x, epsilon=1e-6):
     """
     A Blanchot-inspired activation function where thresholds exist
